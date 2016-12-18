@@ -12,7 +12,7 @@ function Laser() {
 
 
 Laser.prototype.draw = function() {
-    if(Laser.heating > 0 && !Laser.overheated) {
+    if(Game.hero.weapons['laser'] && Laser.heating > 0 && !Laser.overheated) {
         Laser.heating--;
         document.getElementById("laser").style.borderLeftWidth = Laser.heating > 0 ? Laser.heating : 1;
 
@@ -33,18 +33,16 @@ Laser.prototype.draw = function() {
         Game.ctx.stroke();
     } else {
         Laser.overheated = true;
+        this.cooling();
     }
 
 };
 
 Laser.prototype.cooling = function() {
-    if (Laser.overheated) {
-        if(Laser.heating < 150) {
-            Laser.heating ++;
-            document.getElementById("laser").style.borderLeftWidth = Laser.heating;
-        } else {
-            Laser.overheated = false;
-        }
-
+    if(Laser.heating < 150) {
+        Laser.heating ++;
+        document.getElementById("laser").style.borderLeftWidth = Laser.heating;
+    } else {
+        Laser.overheated = false;
     }
 };

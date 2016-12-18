@@ -1,18 +1,14 @@
 function Vector2 (x,y) {
-    this.x= x || 0;
+    this.x = x || 0;
     this.y = y || 0;
 };
 
-
-
 Vector2.prototype = {
     reset: function ( x, y ) {
-
         this.x = x;
         this.y = y;
 
         return this;
-
     },
 
     toString : function (decPlaces) {
@@ -51,6 +47,16 @@ Vector2.prototype = {
         this.y = this.y/m;
 
         return this;
+    },
+
+    normaliseNew : function () {
+        var returnvec = this.clone();
+        var m = this.magnitude();
+
+        returnvec.x = this.x/m;
+        returnvec.y = this.y/m;
+
+        return returnvec;
     },
 
     reverse : function () {
@@ -92,6 +98,10 @@ Vector2.prototype = {
     multiplyNew : function (scalar) {
         var returnvec = this.clone();
         return returnvec.multiplyEq(scalar);
+    },
+
+    multiplyBy : function (v) {
+        return new Vector2(this.x * v.x, this.y * v.y);
     },
 
     divideEq : function (scalar) {
@@ -160,7 +170,15 @@ Vector2.prototype = {
 
     isMagGreaterThan : function (distance) {
         return(this.magnitudeSquared()>distance*distance);
-    }
+    },
+
+    perpendicular: function () {
+        return new Vector2(-this.y, this.x);
+    },
+
+    length: function() {
+        return Math.sqrt(this.dot(this));
+    },
 
 };
 

@@ -53,7 +53,7 @@ Hero.prototype.draw = function() {
     }
 
     for(e in Enemy.all) {
-        if(Game.sphereCollisionDetection(Enemy.all[e].x, Enemy.all[e].y, Enemy.all[e].r, x, y, this.r)) {
+        if(Game.sphereCollisionDetection(Enemy.all[e].position.x, Enemy.all[e].position.y, Enemy.all[e].r, x, y, this.r)) {
             if(this.life > 0) {
                 this.life --;
                 healing = false;
@@ -68,7 +68,7 @@ Hero.prototype.draw = function() {
     }
 
 
-    if(healing && this.life < 100) {
+    if(healing && this.life < 150) {
         this.life += 0.2;
         document.getElementById("life").style.borderLeftWidth = this.life;
     }

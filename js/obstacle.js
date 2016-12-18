@@ -18,8 +18,9 @@ Obstacle.draw = function() {
     for(o in Obstacle.all) {
         Game.ctx.beginPath();
         Game.ctx.arc(Obstacle.all[o].x, Obstacle.all[o].y, Obstacle.all[o].r, 0, Math.PI / 180 * 360);
+        Game.ctx.strokeStyle = Obstacle.all[o].color;
         Game.ctx.fillStyle = Obstacle.all[o].color;
-        Game.ctx.closePath();
         Game.ctx.fill();
+        Game.ctx.closePath();
     }
 };
