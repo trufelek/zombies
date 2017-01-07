@@ -2,7 +2,7 @@ function Hero() {
     this.r = 15;
     this.shape = 50;
     this.angle = 0;
-    this.color = 'rgb(255, 92, 92)';
+    this.color = 'salmon';
     this.lineWidth = 2;
     this.x = Game.width / 2;
     this.y = Game.height / 2;
@@ -25,12 +25,12 @@ Hero.prototype.draw = function() {
 
     if(Game.keys[37]) {
         // obrót w lewo
-        this.angle += 5 * -1;
+        this.angle += 3 * -1;
     }
 
     if(Game.keys[39]) {
         // obrót w prawo
-        this.angle +=  5 * 1;
+        this.angle +=  3 * 1;
     }
 
     if(Game.keys[38]) {

@@ -3,19 +3,21 @@ Enemy.count = 0;
 
 function Enemy() {
     this.id = Enemy.count.toString();
-    this.color = 'rgb(173, 255, 47)';
+    this.color = 'greenyellow';
 
     // random enemy position
     this.r = 10;
     this.x = Game.rand(0,1) ? (Game.rand(0,1) / 10) * Game.width + this.r : (Game.rand(9, 10) / 10) * Game.width - this.r;
     this.y = Game.rand(0,1) ? (Game.rand(0,1) / 10) * Game.height + this.r  : (Game.rand(9, 10) / 10) * Game.height - this.r;
+    this.size = this.r * 2;
 
     // moving
     this.position = new Vector2(this.x, this.y);
-    this.velocity = new Vector2(0,0);
-    this.heading = new Vector2(0,0);
-    this.side = new Vector2(0,0);
+    this.velocity = new Vector2();
+    this.heading = new Vector2();
+    this.side = new Vector2();
     this.mass = 1;
+    this.max_force = 3;
 
     // wander
     this.wander_target = new Vector2();
@@ -27,8 +29,8 @@ function Enemy() {
     this.detection_box = 50;
 
     // wall avoidance
-    this.feelers = [];
-    this.feeler_length = 2;
+    this.feeler_length = 50;
+    this.feeler = new Vector2();
 
     Enemy.count ++;
     Enemy.all[this.id] = this;
@@ -42,7 +44,7 @@ Enemy.draw = function() {
         Game.ctx.closePath();
         Game.ctx.fill();
 
-        Enemy.drawDetectionBox();
+        Enemy.drawHelpers();
     }
 };
 
@@ -54,14 +56,21 @@ Enemy.update = function() {
         var wall_avoidance = Enemy.all[e].wallAvoidance();
        
         // multiply forces by their weights
-        wander.multiplyEq(0.7);
-        obstacle_avoidance.multiplyEq(0.5);
-        wall_avoidance.multiplyEq(1);
+        wander.multiplyEq(0.2);
+        obstacle_avoidance.multiplyEq(1);
+        wall_avoidance.multiplyEq(0.5);
 
         // add forces to each other
         steering_force = steering_force.plusNew(wander);
         steering_force = steering_force.plusNew(obstacle_avoidance);
         steering_force = steering_force.plusNew(wall_avoidance);
+
+        // if steering force is bigger than max force, scale it
+        if(steering_force.magnitude() > Enemy.all[e].max_force) {
+            var ratio = Enemy.all[e].max_force / steering_force.magnitude();
+            steering_force.x *= ratio;
+            steering_force.y *= ratio;
+        }
 
         // steering
         var acceleration = steering_force.divideNew(Enemy.all[e].mass);
@@ -71,6 +80,9 @@ Enemy.update = function() {
         var velocity = Enemy.all[e].velocity;
         Enemy.all[e].heading = velocity.normalise();
         Enemy.all[e].side = Enemy.all[e].heading.perpendicular();
+
+        Enemy.all[e].x = Enemy.all[e].position.x;
+        Enemy.all[e].y = Enemy.all[e].position.y;
     }
 };
 
@@ -87,10 +99,6 @@ Enemy.prototype.wander = function() {
 
     // move the target into a position WanderDist in front of the agent
     var local_position = this.wander_target.plusNew(new Vector2(this.wander_distance, 0));
-
-    // TODO: sprawdzić dlaczego nie działa global position
-    //var global_position = Game.pointToGlobalSpace(local_position, this.heading, this.position);
-    //return (global_position.minusNew(this.position));
 
     return local_position;
 };
@@ -156,52 +164,35 @@ Enemy.prototype.obstacleAvoidance = function() {
 };
 
 Enemy.prototype.wallAvoidance = function() {
-    var distance_to_this_ip = 0;
-    var distance_to_closest_ip = null;
-    var closest_wall = null;
-    var closest_index = -1;
-
-    var point = new Vector2();
+    // create enemy feeler
+    this.feeler = this.position.plusNew(this.heading.multiplyNew(this.feeler_length));
     var steering_force = new Vector2();
-    var closest_point = new Vector2();
 
-    this.createFeelers();
+    // left side
+    if(this.feeler.x < this.size) {
+        var delta = Math.abs(0 - this.feeler.x);
+        steering_force.x = steering_force.x + delta;
+    // right side
+    } else if(this.feeler.x > Game.width - this.size) {
+        var delta = Math.abs(Game.width - this.feeler.x);
+        steering_force.x = steering_force.x - delta;
+    }
 
-    // examine each feeler in turn
-    for(var f = 0; f < this.feelers.length; f++) {
-        // run through each wall checking for any intersection points
-        for(var w = 0; w < Wall.count; w++) {
-            // current wall
-            var wall = Wall.all[w];
-            var intersection = Game.lineIntersection2D(this.position, this.feelers[f], wall.from, wall.to);
-
-            if(intersection.istrue) {
-                // is this the closest found so far? if so keep a record
-                if(distance_to_this_ip < distance_to_closest_ip || distance_to_closest_ip == null) {
-                    distance_to_closest_ip = intersection.distance;
-                    closest_index = w;
-                    closest_wall = Wall.all[w];
-                    closest_point = intersection.point;
-                }
-            }
-        }
-        // if an intersection point has been detected, calculate a force that will direct the agent away
-        if(closest_index >= 0) {
-            var overshoot = this.feelers[f].minusNew(closest_point);
-            var wall_vector = new Vector2(closest_wall.to.x - closest_wall.from.x, closest_wall.to.y - closest_wall.from.y);
-
-            // create a force in the direction of the wall normal, with a magnitude of the overshoot
-            steering_force = wall_vector.normalise().multiplyNew(overshoot.length());
-        }
+    // top
+    if(this.feeler.y < this.size) {
+        var delta = Math.abs(0 - this.feeler.y);
+        steering_force.y = steering_force.y + delta;
+    // bottom
+    } else if(this.feeler.y > Game.height - this.size) {
+        var delta = Math.abs(Game.height - this.feeler.y);
+        steering_force.y = steering_force.y - delta;
     }
 
     return steering_force;
 };
 
-Enemy.drawDetectionBox = function() {
+Enemy.drawHelpers = function() {
     for(e in Enemy.all) {
-        Game.ctx.beginPath();
-
         // set new center
         Game.ctx.translate(Enemy.all[e].position.x, Enemy.all[e].position.y);
 
@@ -209,29 +200,21 @@ Enemy.drawDetectionBox = function() {
         Game.ctx.rotate(Enemy.all[e].wander_target.angle(true));
 
         // draw box
+        Game.ctx.beginPath();
         Game.ctx.strokeStyle = 'white';
         Game.ctx.rect(0, 0 - Enemy.all[e].r, Enemy.all[e].detection_box, Enemy.all[e].r * 2);
         Game.ctx.stroke();
+        Game.ctx.closePath();
+
+        // draw feeler
+        Game.ctx.beginPath();
+        Game.ctx.strokeStyle = 'pink';
+        Game.ctx.rect(0, 0, Enemy.all[e].feeler_length, 1);
+        Game.ctx.stroke();
+        Game.ctx.closePath();
 
         // reset
         Game.ctx.rotate(Enemy.all[e].wander_target.angle(true) * (-1));
         Game.ctx.translate((Enemy.all[e].position.x) * (-1), (Enemy.all[e].position.y) * (-1));
-
-        Game.ctx.closePath();
     }
-};
-
-Enemy.prototype.createFeelers = function() {
-    // feeler pointing straight in front
-    this.feelers[0] = this.position.plusNew(this.heading.multiplyNew(this.feeler_length));
-
-    // feeler to left
-    var temp = this.heading;
-    var rotated = temp.rotate((Math.PI / 2) * 3.5, true);
-    this.feelers[1] = this.position.plusNew(rotated.multiplyNew(this.feeler_length / 0.2));
-
-    // feeler to right
-    temp = this.heading;
-    var rotated = temp.rotate((Math.PI / 2) * 0.5, true);
-    this.feelers[2] = this.position.plusNew(rotated.multiplyNew(this.feeler_length / 0.2));
 };

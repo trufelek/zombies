@@ -167,6 +167,7 @@ Game = {
 
     lineIntersection2D : function(A, B, C, D) {
         var data = {dist: 0, point: new Vector2(), istrue: false};
+
         var rTop = (A.y-C.y)*(D.x-C.x)-(A.x-C.x)*(D.y-C.y);
         var rBot = (B.x-A.x)*(D.y-C.y)-(B.y-A.y)*(D.x-C.x);
 
@@ -236,11 +237,60 @@ Game = {
 
         return new Vector2(x, y);
     },
+
     vectorToWorldSpace: function(vector, heading) {
         var transformation_matrix = [[1, 0, 0], [0, 1, 0], [0, 0, 1]];
         transformation_matrix = Game.rotate(transformation_matrix, heading);
 
         return Game.transformVector2D(transformation_matrix, vector);
+    },
+
+    interceptCircleLine: function(circle, line) {
+        var b, c, d, u1, u2, ret, retP1, retP2, v1, v2;
+        v1 = {};
+        v2 = {};
+
+        v1.x = line.endX - line.startX;
+        v1.y = line.endY - line.startY;
+        v2.x = line.startX - circle.x;
+        v2.y = line.startY - circle.y;
+
+        b = (v1.x * v2.x + v1.y * v2.y);
+        c = 2 * (v1.x * v1.x + v1.y * v1.y);
+        b *= -2;
+        d = Math.sqrt(b * b - 2 * c * (v2.x * v2.x + v2.y * v2.y - circle.r * circle.r));
+
+        // no intercept
+        if(isNaN(d)){
+            return [];
+        }
+
+        // these represent the unit distance of point one and two on the line
+        u1 = (b - d) / c;
+        u2 = (b + d) / c;
+
+        // return points
+        retP1 = {};
+        retP2 = {}
+
+        // return array
+        ret = [];
+
+        // add point if on the line segment
+        if(u1 <= 1 && u1 >= 0){
+            retP1.x = line.startX + v1.x * u1;
+            retP1.y = line.startY + v1.y * u1;
+            ret[0] = retP1;
+        }
+
+        // second add point if on the line segment
+        if(u2 <= 1 && u2 >= 0){
+            retP2.x = line.startX + v1.x * u2;
+            retP2.y = line.startY + v1.y * u2;
+            ret[ret.length] = retP2;
+        }
+
+        return ret;
     },
 
     multiply: function(a, b) {

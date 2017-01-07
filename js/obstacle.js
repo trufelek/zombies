@@ -8,7 +8,7 @@ function Obstacle() {
     this.r = Game.rand(this.minR, this.maxR);
     this.x = (Game.rand(0,1) ? Game.rand(2,3) / 10 : Game.rand(7,8) / 10) * Game.width;
     this.y = (Game.rand(0,1) ? Game.rand(2,3) / 10 : Game.rand(7,8) / 10) * Game.height;
-    this.color = 'rgb(255, 102, 102)';
+    this.color = 'lightcoral';
 
     Obstacle.count ++;
     Obstacle.all[this.id] = this;
