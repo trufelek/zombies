@@ -1,5 +1,6 @@
 Enemy.all = {};
 Enemy.count = 0;
+Enemy.state = 'wander';
 
 function Enemy() {
     this.id = Enemy.count.toString();
@@ -32,6 +33,11 @@ function Enemy() {
     this.feeler_length = 50;
     this.feeler = new Vector2();
 
+    // attack
+    this.group_radius = 150;
+    this.amount_to_attack = 5;
+    this.attack = false;
+
     Enemy.count ++;
     Enemy.all[this.id] = this;
 };
@@ -44,26 +50,36 @@ Enemy.draw = function() {
         Game.ctx.closePath();
         Game.ctx.fill();
 
-        Enemy.drawHelpers();
+        //Enemy.drawHelpers();
     }
 };
 
 Enemy.update = function() {
     for(e in Enemy.all) {
+        // group steering
+        Enemy.all[e].checkGroup();
+
+        // basic steering
         var steering_force = new Vector2();
-        var wander = Enemy.all[e].wander();
-        var obstacle_avoidance = Enemy.all[e].obstacleAvoidance();
-        var wall_avoidance = Enemy.all[e].wallAvoidance();
-       
-        // multiply forces by their weights
-        wander.multiplyEq(0.2);
-        obstacle_avoidance.multiplyEq(1);
-        wall_avoidance.multiplyEq(0.5);
+        var wander = Enemy.all[e].wander().multiplyNew(0.2);
+        var obstacle_avoidance = Enemy.all[e].obstacleAvoidance().multiplyNew(1);
+        var wall_avoidance = Enemy.all[e].wallAvoidance().multiplyNew(0.5);
 
         // add forces to each other
         steering_force = steering_force.plusNew(wander);
         steering_force = steering_force.plusNew(obstacle_avoidance);
         steering_force = steering_force.plusNew(wall_avoidance);
+
+        // steering behaviors
+         if(Enemy.state == 'hide' && !Enemy.all[e].attack) {
+            var hiding = Enemy.all[e].hide().multiplyNew(0.1);
+            steering_force = steering_force.plusNew(hiding);
+        }
+
+        if(Enemy.all[e].attack) {
+             var attack = Enemy.all[e].arrive(Game.hero.position).multiplyNew(0.5);
+             steering_force = steering_force.plusNew(attack);
+        }
 
         // if steering force is bigger than max force, scale it
         if(steering_force.magnitude() > Enemy.all[e].max_force) {
@@ -83,6 +99,22 @@ Enemy.update = function() {
 
         Enemy.all[e].x = Enemy.all[e].position.x;
         Enemy.all[e].y = Enemy.all[e].position.y;
+    }
+};
+
+Enemy.prototype.arrive = function(target_position) {
+    var to_target = target_position.minusNew(this.position);
+    var distance = to_target.length();
+
+    if(distance > 0) {
+        var tweaker = 0.3;
+        var speed = distance / tweaker;
+        var desired_velocity = to_target.multiplyNew(speed).divideNew(distance);
+
+        return desired_velocity.minusNew(this.velocity);
+
+    } else {
+        return new Vector2();
     }
 };
 
@@ -149,13 +181,6 @@ Enemy.prototype.obstacleAvoidance = function() {
         var breaking_weight = 0.2;
         var multiplier = 1 + (this.detection_box - closest_obstacle_pos.x) / this.detection_box;
 
-        // highlight closest obstacle
-        Game.ctx.beginPath();
-        Game.ctx.arc(closest_obstacle.x, closest_obstacle.y, closest_obstacle.r, 0, Math.PI / 180 * 360);
-        Game.ctx.fillStyle = 'red';
-        Game.ctx.closePath();
-        Game.ctx.fill();
-
         steering_force.y = (closest_obstacle.r - closest_obstacle_pos.y) * multiplier;
         steering_force.x = (closest_obstacle.r - closest_obstacle_pos.x) * breaking_weight;
     }
@@ -189,6 +214,56 @@ Enemy.prototype.wallAvoidance = function() {
     }
 
     return steering_force;
+};
+
+Enemy.prototype.getHidingSpot = function(obstacle_position, obstacle_radius, hero_position) {
+    var distance_from_boundary = 30;
+    var distance_away = obstacle_radius + distance_from_boundary;
+    var to_object = obstacle_position.minusNew(hero_position);
+
+    to_object.normalise();
+
+    return obstacle_position.plusNew(to_object.multiplyNew(distance_away));
+};
+
+Enemy.prototype.hide = function() {
+    var closest_distance = null;
+    var best_hiding_spot;
+
+    for(o in Obstacle.all) {
+        // get hiding spot
+        var hiding_spot = this.getHidingSpot(Obstacle.all[o].position, Obstacle.all[o].r, Game.hero.position);
+
+        var distance = math.distance([hiding_spot.x, hiding_spot.y], [this.position.x, this.position.y]);
+
+        if(distance < closest_distance || closest_distance == null) {
+            closest_distance = distance;
+            best_hiding_spot = hiding_spot;
+        }
+    }
+
+    return this.arrive(best_hiding_spot);
+
+};
+
+Enemy.prototype.checkGroup = function() {
+   var grouped = [];
+
+    for(var i = 0; i < Enemy.count; i++) {
+        if(Enemy.all[i]!= undefined && Enemy.all[i] != this && !Enemy.all[i].attack) {
+            if(Game.sphereCollisionDetection(this.x, this.y, this.group_radius, Enemy.all[i].x, Enemy.all[i].y, Enemy.all[i].r)) {
+                grouped.push(Enemy.all[i]);
+            }
+        }
+    }
+
+    if(grouped.length >= this.amount_to_attack) {
+        for(var i = 0; i < grouped.length; i++) {
+            var attacking_enemy = grouped[i];
+            attacking_enemy.attack = true;
+            attacking_enemy.color = 'red';
+        }
+    }
 };
 
 Enemy.drawHelpers = function() {

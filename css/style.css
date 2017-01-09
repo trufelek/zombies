@@ -22,6 +22,17 @@ canvas {
     width: 150px;
 }
 
+.ui #score {
+    background: transparent;
+    color: #fff;
+    font-family: "Joystix Monospace", "Consolas";
+    font-size: 16px;
+    height: auto;
+    right: 0;
+    padding: 5px 15px;
+    width: auto;
+}
+
 #life {
     border: 1px solid #ff6666;
     border-left: 150px solid #ff6666;
@@ -42,4 +53,35 @@ canvas {
     top: 45px;
     left: 10px;
     opacity: 0;
+}
+
+#over {
+    align-items: center;
+    background: rgba(0, 0, 0, 0.8);
+    color: #fff;
+    display: none;
+    font-family: "Joystix Monospace", "Consolas";
+    font-size: 24px;
+    flex-direction: column;
+    height: 100%;
+    justify-content: center;
+    left: 0;
+    line-height: 30px;
+    position: fixed;
+    top: 0;
+    width: 100%;
+}
+
+#over .reload {
+    color: salmon;
+    cursor: pointer;
+    text-decoration: none;
+}
+
+#over.success .failure{
+    display: none;
+}
+
+#over.failure .success{
+    display: none;
 }

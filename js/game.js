@@ -5,7 +5,6 @@ Game = {
     lastTime: 0,
     lastUpdate: -1,
     controls: [32, 37, 38, 39, 40, 49, 50, 18],
-    obstacles: 6,
     enemies: 1,
     keys: {},
     pause: false,
@@ -19,9 +18,7 @@ Game = {
         Game.hero = new Hero();
         Game.laser = new Laser();
 
-        for (var i = 0; i < Game.obstacles; i++) {
-            new Obstacle();
-        }
+        Obstacle.init();
 
         for (var i = 0; i < 4; i++) {
             new Wall();
@@ -252,8 +249,8 @@ Game = {
 
         v1.x = line.endX - line.startX;
         v1.y = line.endY - line.startY;
-        v2.x = line.startX - circle.x;
-        v2.y = line.startY - circle.y;
+        v2.x = line.startX - circle.position.x;
+        v2.y = line.startY - circle.position.y;
 
         b = (v1.x * v2.x + v1.y * v2.y);
         c = 2 * (v1.x * v1.x + v1.y * v1.y);
@@ -309,10 +306,10 @@ Game = {
     return m;
 },
 
-    reset: function() {
-        // game restart
+    over: function(status) {
         Game.pause = true;
-        location.reload();
+        document.getElementById("over").className = status;
+        document.getElementById("over").style.display = 'flex';
     }
 };
 

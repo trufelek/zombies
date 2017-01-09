@@ -6,11 +6,13 @@ function Hero() {
     this.lineWidth = 2;
     this.x = Game.width / 2;
     this.y = Game.height / 2;
+    this.position = new Vector2(this.x, this.y);
     this.points = [{}, {}, {}];
     this.acceleration = 3;
     this.life = 150;
     this.mag = 25;
     this.ammo = 25;
+    this.score = 0;
     this.weapons = {
         gun: true,
         laser: false
@@ -59,7 +61,7 @@ Hero.prototype.draw = function() {
                 healing = false;
                 document.getElementById("life").style.borderLeftWidth = this.life;
             } else {
-                Game.reset();
+                Game.over('failure');
             }
             break;
         } else {
@@ -75,10 +77,12 @@ Hero.prototype.draw = function() {
 
     if (x - this.r > 0 && x + this.r <= Game.width && !collision) {
         this.x = x;
+        this.position.x = x;
     }
 
     if (y - this.r > 0 && y + this.r <= Game.height && !collision) {
         this.y = y;
+        this.position.y = y;
     }
 
     Game.ctx.beginPath();

@@ -21,6 +21,7 @@ function Bullet() {
 Bullet.draw = function() {
     for (var bullet in Bullet.all) {
         if(Bullet.all[bullet].life < Bullet.life) {
+            Bullet.all[bullet].obstacleCollisionDetection();
             Bullet.all[bullet].enemyCollisionDetection();
             Bullet.all[bullet].life ++;
 
@@ -39,11 +40,30 @@ Bullet.draw = function() {
     }
 };
 
+Bullet.prototype.obstacleCollisionDetection = function() {
+    for(o in Obstacle.all) {
+        if(Game.sphereCollisionDetection(this.x, this.y, this.r, Obstacle.all[o].x, Obstacle.all[o].y, Obstacle.all[o].r)) {
+            this.life = Bullet.life;
+        }
+    }
+};
+
 Bullet.prototype.enemyCollisionDetection = function() {
     for(e in Enemy.all) {
         if(Game.sphereCollisionDetection(this.x, this.y, this.r, Enemy.all[e].x, Enemy.all[e].y, Enemy.all[e].r)) {
             this.life = Bullet.life;
+
+            Game.hero.score ++;
+            document.getElementById("score").textContent = "zabite zombie: " + Game.hero.score;
+
+            Enemy.count --;
             delete Enemy.all[e];
+
+            if(!Enemy.count) {
+                setTimeout(function() {
+                    Game.over('success');
+                }, 500);
+            }
         }
     }
 };

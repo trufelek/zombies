@@ -21,6 +21,8 @@ Laser.prototype.draw = function() {
         Laser.heating--;
         document.getElementById("laser").style.borderLeftWidth = Laser.heating > 0 ? Laser.heating : 1;
 
+        Enemy.state = 'hide';
+
         // change laser bar color
         this.red_value += 2;
         this.blue_value -= 2;
@@ -46,6 +48,8 @@ Laser.prototype.draw = function() {
         Game.ctx.closePath();
         Game.ctx.stroke();
     } else {
+        Enemy.state = 'wander';
+
         if(Laser.heating == 0) {
             Laser.overheated = true;
         }
@@ -62,7 +66,7 @@ Laser.prototype.obstacleCollisionDetection = function() {
         if(intersection_points.length) {
             this.length = Math.sqrt(Math.pow(this.startX - intersection_points[0].x , 2) + Math.pow(this.startY - intersection_points[0].y, 2));
         } else {
-            this.length ++;
+            this.length += 1;
         }
     }
 };
@@ -73,9 +77,20 @@ Laser.prototype.enemyCollisionDetection = function() {
 
         if(intersection_points.length) {
             this.length = Math.sqrt(Math.pow(this.startX - intersection_points[0].x , 2) + Math.pow(this.startY - intersection_points[0].y, 2));
+
+            Game.hero.score ++;
+            document.getElementById("score").textContent = "zabite zombie: " + Game.hero.score;
+
+            Enemy.count --;
             delete Enemy.all[e];
+
+            if(!Enemy.count) {
+                setTimeout(function() {
+                    Game.over('success');
+                }, 500);
+            }
         } else {
-            this.length ++;
+            this.length += 5;
         }
     }
 };
