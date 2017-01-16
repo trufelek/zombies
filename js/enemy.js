@@ -1,6 +1,7 @@
 Enemy.all = {};
+Enemy.state = 'wander&hide';
 Enemy.count = 0;
-Enemy.state = 'wander';
+Enemy.timer = 0;
 
 function Enemy() {
     this.id = Enemy.count.toString();
@@ -18,7 +19,7 @@ function Enemy() {
     this.heading = new Vector2();
     this.side = new Vector2();
     this.mass = 1;
-    this.max_force = 3;
+    this.max_force = 1;
 
     // wander
     this.wander_target = new Vector2();
@@ -49,36 +50,58 @@ Enemy.draw = function() {
         Game.ctx.fillStyle = Enemy.all[e].color;
         Game.ctx.closePath();
         Game.ctx.fill();
-
-        //Enemy.drawHelpers();
     }
 };
 
 Enemy.update = function() {
+    Enemy.timer ++;
+
+    if(Enemy.timer % 500 == 0) {
+        if(Enemy.state == 'wander') {
+            Enemy.state = 'wander&hide';
+        } else {
+            Enemy.state = 'wander';
+        }
+    }
+
     for(e in Enemy.all) {
         // group steering
         Enemy.all[e].checkGroup();
 
         // basic steering
         var steering_force = new Vector2();
-        var wander = Enemy.all[e].wander().multiplyNew(0.2);
         var obstacle_avoidance = Enemy.all[e].obstacleAvoidance().multiplyNew(1);
         var wall_avoidance = Enemy.all[e].wallAvoidance().multiplyNew(0.5);
 
         // add forces to each other
-        steering_force = steering_force.plusNew(wander);
         steering_force = steering_force.plusNew(obstacle_avoidance);
         steering_force = steering_force.plusNew(wall_avoidance);
 
-        // steering behaviors
-         if(Enemy.state == 'hide' && !Enemy.all[e].attack) {
-            var hiding = Enemy.all[e].hide().multiplyNew(0.1);
+        // steering behaviors: wander
+        if(Enemy.state == 'wander') {
+            var wander = Enemy.all[e].wander().multiplyNew(0.05);
+            steering_force = steering_force.plusNew(wander);
+
+            var hiding = Enemy.all[e].hide().multiplyNew(0.00005);
+            steering_force = steering_force.plusNew(hiding);
+
+        // steering behaviors: wander & hide
+        } else if(Enemy.state == 'wander&hide') {
+            var wander = Enemy.all[e].wander().multiplyNew(0.0005);
+            steering_force = steering_force.plusNew(wander);
+
+            var hiding = Enemy.all[e].hide().multiplyNew(0.005);
+            steering_force = steering_force.plusNew(hiding);
+
+        // steering behaviors: hide
+        } else if(Enemy.state == 'hide' && !Enemy.all[e].attack) {
+            var hiding = Enemy.all[e].hide().multiplyNew(0.005);
             steering_force = steering_force.plusNew(hiding);
         }
 
         if(Enemy.all[e].attack) {
-             var attack = Enemy.all[e].arrive(Game.hero.position).multiplyNew(0.5);
-             steering_force = steering_force.plusNew(attack);
+            var attack = Enemy.all[e].arrive(Game.hero.position).multiplyNew(0.05);
+            steering_force = steering_force.plusNew(attack);
         }
 
         // if steering force is bigger than max force, scale it

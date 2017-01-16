@@ -5,7 +5,7 @@ Game = {
     lastTime: 0,
     lastUpdate: -1,
     controls: [32, 37, 38, 39, 40, 49, 50, 18],
-    enemies: 1,
+    enemies: 10,
     keys: {},
     pause: false,
     init: function() {
@@ -103,7 +103,6 @@ Game = {
         requestAnimationFrame(Game.animationLoop);
 
         if(time - Game.lastTime >= 1000 / Game.fps) {
-            Game.lastTime = time;
             Game.ctx.clearRect(0,0, Game.width, Game.height);
 
             // draw objects

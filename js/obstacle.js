@@ -1,6 +1,6 @@
 Obstacle.all = {};
 Obstacle.count = 0;
-Obstacle.positions = [[200, 200], [350, 400], [150, 350], [780, 150], [780, 400]];
+Obstacle.positions = [[200, 150], [350, 425], [150, 350], [780, 150], [780, 400]];
 
 function Obstacle() {
     this.id = Obstacle.count.toString();

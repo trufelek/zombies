@@ -21,7 +21,7 @@ Laser.prototype.draw = function() {
         Laser.heating--;
         document.getElementById("laser").style.borderLeftWidth = Laser.heating > 0 ? Laser.heating : 1;
 
-        Enemy.state = 'hide';
+        //Enemy.state = 'hide';
 
         // change laser bar color
         this.red_value += 2;
@@ -48,7 +48,7 @@ Laser.prototype.draw = function() {
         Game.ctx.closePath();
         Game.ctx.stroke();
     } else {
-        Enemy.state = 'wander';
+        //Enemy.state = 'wander';
 
         if(Laser.heating == 0) {
             Laser.overheated = true;
@@ -90,7 +90,7 @@ Laser.prototype.enemyCollisionDetection = function() {
                 }, 500);
             }
         } else {
-            this.length += 5;
+            this.length += 1;
         }
     }
 };
